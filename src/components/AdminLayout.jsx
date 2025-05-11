@@ -1,7 +1,14 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const AdminLayout = ({ children }) => {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    sessionStorage.removeItem("ecoWasteUser"); 
+    navigate("/login"); 
+  };
+
   return (
     <div className="flex min-h-screen bg-gray-100">
       {/* Sidebar */}
@@ -26,12 +33,12 @@ const AdminLayout = ({ children }) => {
           >
             📊 Reports
           </Link>
-          <Link
-            to="/login"
-            className="block text-red-600 hover:underline mt-10"
+          <button
+            onClick={handleLogout}
+            className="block text-left w-full text-red-600 hover:underline mt-10 font-medium"
           >
             🚪 Logout
-          </Link>
+          </button>
         </nav>
       </aside>
 

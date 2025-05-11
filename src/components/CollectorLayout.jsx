@@ -5,7 +5,7 @@ const CollectorLayout = ({ children }) => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    localStorage.removeItem("ecoWasteUser");
+    sessionStorage.removeItem("ecoWasteUser");
     navigate("/login");
   };
 

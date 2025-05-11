@@ -3,7 +3,7 @@ import AdminPickupAssign from './AdminPickupAssign';
 import AdminReports from './AdminReports';
 // import AdminProfile from './AdminProfile';
 
-const AdminDashboard = () => {
+const AdminUsers = () => {
   const [activeTab, setActiveTab] = useState('assign');
   const [users, setUsers] = useState([]);
 
@@ -129,4 +129,4 @@ const AdminDashboard = () => {
   );
 };
 
-export default AdminDashboard;
+export default AdminUsers;

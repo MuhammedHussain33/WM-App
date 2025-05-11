@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import axios from "axios";
 import {
   PieChart,
   Pie,
@@ -18,37 +19,74 @@ const COLORS = ["#22c55e", "#3b82f6", "#f59e0b", "#ef4444"];
 const AdminReports = () => {
   const [users, setUsers] = useState([]);
   const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true); // Loading state
+  const [error, setError] = useState(""); // Error state for API call
 
   useEffect(() => {
-    const allUsers =
-      JSON.parse(localStorage.getItem("ecoWasteUsers")) ||
-      JSON.parse(localStorage.getItem("blog-usersDB")) ||
-      [];
-    const allRequests = JSON.parse(localStorage.getItem("pickupRequests")) || [];
+    const fetchData = async () => {
+      try {
+        // Fetch users and requests from the backend API
+        const usersResponse = await axios.get("/api/users");
+        const requestsResponse = await axios.get("/api/requests");
 
-    
-    const cleanedRequests = allRequests.map((r) => ({
-      ...r,
-      status: r.status || "Pending",
-    }));
+        // Log the response to verify the structure
+        console.log("Users Response:", usersResponse.data);
+        console.log("Requests Response:", requestsResponse.data);
 
-    setUsers(allUsers);
-    setRequests(cleanedRequests);
+        // Ensure response data is an array
+        setUsers(Array.isArray(usersResponse.data) ? usersResponse.data : []);
+        setRequests(Array.isArray(requestsResponse.data) ? requestsResponse.data : []);
+      } catch (error) {
+        console.error("Error fetching data from backend:", error);
+        setError("Error fetching data. Please try again later.");
+      } finally {
+        setLoading(false); // Set loading to false once the data is fetched
+      }
+    };
+
+    fetchData();
   }, []);
 
+  // Check for loading or error state
+  if (loading) {
+    return (
+      <AdminLayout>
+        <h2 className="text-3xl font-semibold mb-6 text-green-700">
+          Reports & Analytics (Loading...)
+        </h2>
+        {/* Loading spinner */}
+        <div className="text-center">Loading...</div>
+      </AdminLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <AdminLayout>
+        <h2 className="text-3xl font-semibold mb-6 text-green-700">
+          Reports & Analytics
+        </h2>
+        <div className="text-center text-red-600">{error}</div>
+      </AdminLayout>
+    );
+  }
+
+  if (!users.length || !requests.length) {
+    return (
+      <AdminLayout>
+        <h2 className="text-3xl font-semibold mb-6 text-green-700">
+          Reports & Analytics
+        </h2>
+        <div className="text-center">No data available</div>
+      </AdminLayout>
+    );
+  }
+
+  // Prepare data for the charts
   const requestStatusData = [
-    {
-      name: "Pending",
-      value: requests.filter((r) => r.status === "Pending").length,
-    },
-    {
-      name: "In Progress",
-      value: requests.filter((r) => r.status === "In Progress").length,
-    },
-    {
-      name: "Completed",
-      value: requests.filter((r) => r.status === "Completed").length,
-    },
+    { name: "Pending", value: requests.filter((r) => r.status === "Pending").length },
+    { name: "In Progress", value: requests.filter((r) => r.status === "In Progress").length },
+    { name: "Completed", value: requests.filter((r) => r.status === "Completed").length },
   ];
 
   const roleData = ["Admin", "Collector", "Resident"].map((role) => ({
@@ -58,10 +96,9 @@ const AdminReports = () => {
 
   return (
     <AdminLayout>
-      <h2 className="text-3xl font-semibold mb-6 text-green-700">
-        Reports & Analytics
-      </h2>
+      <h2 className="text-3xl font-semibold mb-6 text-green-700">Reports & Analytics</h2>
 
+      {/* User statistics cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-white p-4 rounded-xl shadow">
           <p className="text-gray-500">Total Users</p>
@@ -79,11 +116,11 @@ const AdminReports = () => {
         </div>
       </div>
 
+      {/* Charts for Request Status and User Roles */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Request Status Bar Chart */}
         <div className="bg-white p-4 rounded-xl shadow">
-          <h4 className="text-lg font-semibold mb-4 text-gray-800">
-            Pickup Request Status
-          </h4>
+          <h4 className="text-lg font-semibold mb-4 text-gray-800">Pickup Request Status</h4>
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={requestStatusData}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -95,10 +132,9 @@ const AdminReports = () => {
           </ResponsiveContainer>
         </div>
 
+        {/* User Roles Pie Chart */}
         <div className="bg-white p-4 rounded-xl shadow">
-          <h4 className="text-lg font-semibold mb-4 text-gray-800">
-            User Roles
-          </h4>
+          <h4 className="text-lg font-semibold mb-4 text-gray-800">User Roles Distribution</h4>
           <ResponsiveContainer width="100%" height={250}>
             <PieChart>
               <Pie
@@ -112,10 +148,7 @@ const AdminReports = () => {
                 label
               >
                 {roleData.map((_, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={COLORS[index % COLORS.length]}
-                  />
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
               <Tooltip />
